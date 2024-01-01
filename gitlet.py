@@ -299,7 +299,7 @@ def merge(branchName):
     newCommit.writeCommit()
     Branches.updateCurrentCommitId(newCommitId)
     for file in newFiles:
-        Blob.writeFileFromBlob(newFiles[file],file)
+        Blob.writeFileFromBlob(newFiles[file], file)
     for merge in merges:
         file = open(merge['file'], 'w')
         file.write(merge['content'])
@@ -308,33 +308,53 @@ def merge(branchName):
         print(f"Merge conflict exists in: {merge['file']}")
     print('Merge complete')
 
+if len(args) == 0:
+    print('no command provided')
+    exit()
 
 if args[0] == "init":
     init()
     exit()
+
 if not os.path.exists(".gitlet"):
     print("Error: A gitlet directory does not exists, create one with 'gitlet init'")
 
 elif args[0] == "add":
-    filename = args[1]
+    try:
+        filename = args[1]
+    except BaseException:
+        print("add requires an argument")
+        exit()
+
     if not os.path.exists(filename):
         print("Error: the specified file does not exist")
         exit()
     add(filename)
 
 elif args[0] == "rm":
-    filename = args[1]
+    try:
+        filename = args[1]
+    except BaseException:
+        print("rm takes an argument")
+        exit()
     rm(filename)
 
 elif args[0] == "commit":
-    message = args[1]
+    try:
+        message = args[1]
+    except BaseException:
+        message = ''
     commit(message)
 
 elif args[0] == "log":
     log()
 
 elif args[0] == "branch":
-    newBranchName = args[1]
+    try:
+        newBranchName = args[1]
+    except BaseException:
+        print("branch requires an argument")
+        exit()
     branch(newBranchName)
 
 elif args[0] == "status":
@@ -344,25 +364,36 @@ elif args[0] == "checkout":
         commitId = args[1]
         fileName = args[3]
         checkoutFileByCommitId(fileName, commitId)
-    elif args[1] == "--":
-        filename = args[2]
-        checkoutFile(filename)
+    elif len(args) >= 1:
+        if args[1] == "--":
+            try:
+                filename = args[2]
+            except:
+                print('checkout does not recognize the provided arguments')
+                exit()
+            checkoutFile(filename)
+        else:
+            try:
+                branchName = args[1]
+            except:
+                print('checkout does not recognize the provided arguments')
+                exit()
+            checkoutBranch(branchName)
     else:
-        branchName = args[1]
-        checkoutBranch(branchName)
+        print("checkout does not recognize the provided arguments")
 elif args[0] == "reset":
-    commitId = args[1]
+    try:
+        commitId = args[1]
+    except BaseException:
+        print("reset takes an argument")
+        exit()
     reset(commitId)
 elif args[0] == "merge":
-    mergeBranch = args[1]
+    try:
+        mergeBranch = args[1]
+    except BaseException:
+        print("merge takes an argument")
+        exit()
     merge(mergeBranch)
 else:
-    print("""
-          ERROR: This is not one of the recognized commands
-          The full list of recognized commands are:
-           - add
-           - init
-           - various
-           - other
-           - commands
-          """)
+    print("This is not one of the recognized arguments")
