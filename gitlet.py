@@ -62,8 +62,11 @@ def log():
 
 
 def branch(branchName):
+    if branchName == "head":
+        print("a branch with this name is not allowed")
+        return
     if os.path.exists(os.path.join('.gitlet/data', branchName)):
-        print('A branch with that name already exists')
+        print('a branch with that name already exists')
         return
 
     currentCommitId = Branches.getCurrentCommitId()
@@ -73,13 +76,15 @@ def branch(branchName):
 
 
 def rmBranch(branchname):
-    if Branches.getCurrentBranch() == branchname:
-        print("cannot remove the current Branch")
-    elif not os.path.exists(os.path.join('.gitlet/branch', branchname)):
-        print('A branch with that name does not exist')
+    if branchname == "head":
+        print("a branch with that name does not exist")
+    elif Branches.getCurrentBranch() == branchname:
+        print("cannot remove the current branch")
+    elif not os.path.exists(os.path.join('.gitlet/data', branchname)):
+        print('a branch with that name does not exist')
     else:
-        os.remove(os.path.join('.gitlet/branch', branchname))
-        print("The branch has been removed")
+        os.remove(os.path.join('.gitlet/data', branchname))
+        print("the branch has been removed")
 
 
 def rm(filename):
@@ -123,12 +128,28 @@ def status():
         print(file)
     print()
 
+    currentCommitId = Branches.getCurrentCommitId()
+    currentCommit = Commit()
+    currentCommit.getFromId(currentCommitId)
+    
     print('=== Modifictations Not Staged for Commit ===')
-    print("NOT IMPLEMENTED YET")
+    for file in currentCommit.fileMaps:
+        if not os.path.exists(file) :
+            print(f"{file} (deleted)")
+        else:
+            blobContent = Blob.getContent(currentCommit.fileMaps[file])
+            f = open(file, 'r')
+            content = f.readlines()
+            f.close()
+            if content != blobContent:
+                print(f'{file} (modified)')
     print()
 
+
+    untrackedFiles = currentCommit.getUntrackedFiles()
     print('=== Untracked Files ===')
-    print("Not Implemented Yet")
+    for file in untrackedFiles:
+        print(file)
     print()
 
 
@@ -325,10 +346,6 @@ elif args[0] == "add":
     except BaseException:
         print("add requires an argument")
         exit()
-
-    if not os.path.exists(filename):
-        print("Error: the specified file does not exist")
-        exit()
     add(filename)
 
 elif args[0] == "rm":
@@ -395,5 +412,12 @@ elif args[0] == "merge":
         print("merge takes an argument")
         exit()
     merge(mergeBranch)
+elif args[0] == "branch-rm":
+    try:
+        branch = args[1]
+    except BaseException:
+        print("branch takes an argument")
+        exit()
+    rmBranch(branch)
 else:
     print("This is not one of the recognized arguments")

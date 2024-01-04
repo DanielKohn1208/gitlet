@@ -190,8 +190,6 @@ class Commit:
             Blob.writeBlob(blobId, file)
             fileMaps[file] = blobId
         filesToRemove = Stage.getNotInclude()
-        print("THE FILES TO REMOVE ARE:")
-        print(filesToRemove)
         for file in filesToRemove:
             fileMaps.pop(file)
         self.fileMaps = fileMaps
@@ -213,8 +211,6 @@ class Commit:
         file.write(self.message)
         file.write('\n')
         file.write(self.time)
-        print("the file mpas are :")
-        print(self.fileMaps)
         for dir in self.fileMaps:
             file.write('\n')
             file.write(dir)
@@ -279,9 +275,9 @@ class Commit:
 
     def getUntrackedFiles(self):
         untracked = []
-        for path, subdirs, files in os.walk(''):
+        for path, subdirs, files in os.walk('.'):
             for name in files:
-                file = os.path.join(path, name)
-                if file not in self.fileMaps:
+                file = os.path.join(path, name)[2:]
+                if file[:8] != '.gitlet/' and file not in self.fileMaps:
                     untracked.append(file)
         return untracked
