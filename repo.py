@@ -225,13 +225,13 @@ class Commit:
 
         if self.merge == True:
             par1 = Commit()
-            par1.getFromId(self.parent[0],minimal)
+            par1.getFromId(self.parent[0], minimal)
             par2 = Commit()
-            par2.getFromId(self.parent[1],minimal)
+            par2.getFromId(self.parent[1], minimal)
             parent = [par1, par2]
         else:
             parent = Commit()
-            parent.getFromId(self.parent,minimal)
+            parent.getFromId(self.parent, minimal)
         return parent
 
     def getAncestorsWithDistance(self, distance=1):
@@ -245,32 +245,28 @@ class Commit:
 
         parent = self.getParent(minimal=True)
         if parent == False:
-            return dict()
+            return {self.id: distance}
         elif not isinstance(parent, list):
             return mergeDictionaries(
-                parent.getAncestorsWithDistance(distance + 1), {parent.id: distance})
+                parent.getAncestorsWithDistance(distance + 1), {self.id: distance})
         else:
             return mergeDictionaries(
                 mergeDictionaries(parent[0].getAncestorsWithDistance(distance + 1),
-                                  {parent[0].id: distance}),
-                mergeDictionaries(parent[1].getAncestorsWithDistance(distance + 1),
-                                  {parent[1].id: distance}))
+                                  {self.id: distance}),
+                parent[1].getAncestorsWithDistance(distance + 1)),
 
     def getAncestors(self):
         parent = self.getParent(minimal=True)
         if parent == False:
-            return set()
+            return {self.id}
         if not isinstance(parent, list):
             ancestors = parent.getAncestors()
-            print("ancestors is:")
-            print(ancestors)
-            ancestors.add(parent.id)
+            ancestors.add(self.id)
             return ancestors
         else:
             ancestors = parent[0].getAncestors()
             ancestors.update(parent[1].getAncestors())
-            ancestors.add(parent[0].id)
-            ancestors.add(parent[1].id)
+            ancestors.add(self.id)
             return ancestors
 
     def getUntrackedFiles(self):

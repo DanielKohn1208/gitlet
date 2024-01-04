@@ -131,10 +131,10 @@ def status():
     currentCommitId = Branches.getCurrentCommitId()
     currentCommit = Commit()
     currentCommit.getFromId(currentCommitId)
-    
+
     print('=== Modifictations Not Staged for Commit ===')
     for file in currentCommit.fileMaps:
-        if not os.path.exists(file) :
+        if not os.path.exists(file):
             print(f"{file} (deleted)")
         else:
             blobContent = Blob.getContent(currentCommit.fileMaps[file])
@@ -144,7 +144,6 @@ def status():
             if content != blobContent:
                 print(f'{file} (modified)')
     print()
-
 
     untrackedFiles = currentCommit.getUntrackedFiles()
     print('=== Untracked Files ===')
@@ -172,8 +171,11 @@ def checkoutFileByCommitId(filename, commitId):
     print('checkout is complete')
 
 
-# NOTE: Need to write failure case
 def checkoutBranch(branchName):
+    if branchName == "head" or not os.path.exists(
+            os.path.join('.gitlet/data', branchName)):
+        print('the branch does not exist')
+        exit()
     # old commit
     oldId = Branches.getCurrentCommitId()
     oldCommit = Commit()
@@ -242,13 +244,19 @@ def merge(branchName):
 
     splitPointId = Branches.getSplitPoint(currentCommit, givenCommit)
 
+    print('split point id is', splitPointId)
+    print('given id is ', givenCommitId)
+    print('current point id is' , currentCommitId)
+
     if splitPointId == givenCommitId:
         print("Given branch is an ancestor of the current branch")
-        return
+        exit()
 
     elif splitPointId == currentCommitId:
         Branches.updateCurrentCommitId(givenCommitId)
+        checkoutBranch(currentBranchName)
         print('Current Branch fast-forwarded')
+        exit()
 
     splitPoint = Commit()
     splitPoint.getFromId(splitPointId)
@@ -293,8 +301,6 @@ def merge(branchName):
 
     # at this point all files left in given are not in current commit but may
     # be untracked
-    print('given commit at this point')
-    print(givenCommit.fileMaps)
     for file in givenCommit.fileMaps:
         givenFileContent = Blob.getContent(givenCommit.fileMaps[file])
         if file in untracked:
@@ -328,6 +334,7 @@ def merge(branchName):
         Stage.addToStagingArea(merge['file'])
         print(f"Merge conflict exists in: {merge['file']}")
     print('Merge complete')
+
 
 if len(args) == 0:
     print('no command provided')
@@ -385,14 +392,14 @@ elif args[0] == "checkout":
         if args[1] == "--":
             try:
                 filename = args[2]
-            except:
+            except BaseException:
                 print('checkout does not recognize the provided arguments')
                 exit()
             checkoutFile(filename)
         else:
             try:
                 branchName = args[1]
-            except:
+            except BaseException:
                 print('checkout does not recognize the provided arguments')
                 exit()
             checkoutBranch(branchName)
