@@ -1,145 +1,16 @@
 from datetime import datetime
-import filecmp
 import os
-import shutil
 import uuid
-import sys
 
-
-class Branches:
-    def updateCurrentBranch(newBranchName):
-        file = open(f'.gitlet/data/head', 'w')
-        file.write(newBranchName)
-        file.close()
-
-    def getCurrentBranch():
-        file = open(f'.gitlet/data/head', 'r')
-        currentBranch = file.readline().strip('\n')
-        file.close()
-        return currentBranch
-
-    def updateCurrentCommitId(newCommitId):
-        branchName = Branches.getCurrentBranch()
-        file = open(os.path.join('.gitlet/data', branchName), 'w')
-        file.write(newCommitId)
-        file.close()
-
-    def getCurrentCommitId():
-        branchName = Branches.getCurrentBranch()
-        file = open(os.path.join('.gitlet/data', branchName), 'r')
-        commitId = file.readline()
-        file.close()
-        return commitId
-
-    def getCommidIdByBranch(branchName):
-        file = open(os.path.join('.gitlet/data', branchName), 'r')
-        commitId = file.readline()
-        file.close()
-        return commitId
-
-    def getAllBranches():
-        branches = os.listdir('.gitlet/data')
-        branches.remove('head')
-        return branches
-
-    def getSplitPoint(current, given):
-        ancestorsWithDistance = current.getAncestorsWithDistance()
-        givenAncestors = given.getAncestors()
-        lowestDistance = sys.maxsize
-        splitPoint = None
-
-        for anc in givenAncestors:
-            if anc in ancestorsWithDistance and lowestDistance > ancestorsWithDistance[anc]:
-                lowestDistance = ancestorsWithDistance[anc]
-                splitPoint = anc
-        return splitPoint
-
-
-class Stage:
-    def clearStagingArea():
-        shutil.rmtree('.gitlet/stage')
-        os.makedirs('.gitlet/stage')
-        file = open('.gitlet/rm_on_commit', 'w')
-        file.close()
-
-    def addToStagingArea(file):
-        dir = '/'.join(file.split('/')[:-1])
-        if dir != "":
-            os.makedirs(os.path.join('.gitlet/stage', dir), exist_ok=True)
-        shutil.copy(file, os.path.join('.gitlet/stage', file))
-
-    def removeFromStagingArea(file):
-        os.remove(os.path.join('.gitlet/stage', file))
-
-    def getStagedFiles():
-        stagedFiles = []
-        for path, subdirs, files in os.walk(".gitlet/stage"):
-            for name in files:
-                stagedFile = os.path.join(path, name)[14:]
-                stagedFiles.append(stagedFile)
-        return stagedFiles
-
-    def addNotInclude(filename):
-        file = open('.gitlet/rm_on_commit', 'a')
-        file.write(f'{filename}\n')
-        file.close()
-
-    def getNotInclude():
-        notCommitedFiles = []
-        file = open('.gitlet/rm_on_commit', 'r')
-        notCommitedFile = file.readline().strip('\n')
-        while True:
-            if not notCommitedFile:
-                break
-            elif notCommitedFile != "":
-                notCommitedFiles.append(notCommitedFile)
-            notCommitedFile = file.readline().strip('\n')
-        file.close()
-        return notCommitedFiles
-
-
-class Blob:
-    def writeBlob(id, file):
-        shutil.copy(
-            os.path.join(
-                '.gitlet/stage',
-                file),
-            os.path.join(
-                '.gitlet/blobs',
-                id))
-
-    def writeFileFromBlob(blobId, file):
-        if os.path.dirname(file) != '':
-            os.makedirs(os.path.dirname(file), exist_ok=True)
-        shutil.copy(os.path.join('.gitlet/blobs', blobId), file)
-
-    def makeMergeString(current, given):
-        s = "<<<<<<< HEAD"
-        s += "\n"
-        s += '\n'.join(current)
-        s += "========"
-        s += '\n'
-        s += '\n'.join(given)
-        s += ">>>>>>>>"
-        return s
-
-    def compare(blob1, blob2):
-        return filecmp.cmp(os.path.join('.gitlet/blobs', blob1),
-                           os.path.join('.gitlet/blobs', blob2), shallow=False)
-
-    def getContent(blob):
-        file = open(os.path.join('.gitlet/blobs', blob))
-        contents = file.readlines()
-        file.close()
-        return contents
+from util.branches import Branches 
+from util.stage import Stage
+from util.blob import Blob
 
 
 class Commit:
     def __init__(self, merge=False):
         self.merge = merge
 
-    # NOTE: We need to add failure case where id can't be found and throw an
-    # exception
     def getFromId(self, id, minimal=False):
         if os.path.exists(f'.gitlet/commits/{id}'):
             fp = f'.gitlet/commits/{id}'

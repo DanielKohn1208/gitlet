@@ -3,8 +3,10 @@ import os
 import sys
 import uuid
 
-from repo import Blob, Branches, Commit, Stage
-
+from util.branches import Branches
+from util.commit import Commit
+from util.blob import Blob
+from util.stage import Stage
 
 args = sys.argv[1:]
 
@@ -243,10 +245,6 @@ def merge(branchName):
     givenCommit.getFromId(givenCommitId)
 
     splitPointId = Branches.getSplitPoint(currentCommit, givenCommit)
-
-    print('split point id is', splitPointId)
-    print('given id is ', givenCommitId)
-    print('current point id is' , currentCommitId)
 
     if splitPointId == givenCommitId:
         print("Given branch is an ancestor of the current branch")
